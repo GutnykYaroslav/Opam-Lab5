@@ -6,7 +6,39 @@ using System.Text;
 
 namespace opam_lab5
 {
-   
+    // =========================================================
+    // НОВИЙ КЛАС: ГЕНЕРАТОР ID (Стійкий до помилок)
+    // =========================================================
+    public static class IdGenerator
+    {
+        public static int GetNewId(string filePath)
+        {
+            // Якщо файлу немає, починаємо з 1
+            if (!File.Exists(filePath)) return 1;
+
+            int maxId = 0;
+            // Читаємо всі рядки
+            var lines = File.ReadAllLines(filePath);
+
+            // Пропускаємо шапку (Skip(1))
+            foreach (var line in lines.Skip(1))
+            {
+                var parts = line.Split(',');
+
+                // Перевіряємо, чи є дані і чи є перше поле числом
+                // Якщо рядок пошкоджений (наприклад "sdfsdf,name..."), TryParse поверне false і ми просто підемо далі
+                if (parts.Length > 0 && int.TryParse(parts[0], out int currentId))
+                {
+                    if (currentId > maxId) maxId = currentId;
+                }
+            }
+            return maxId + 1;
+        }
+    }
+
+    // =========================================================
+    // ЧАСТИНА 1: МОДЕЛІ ДАНИХ
+    // =========================================================
     public class Product
     {
         public int Id { get; set; }
@@ -22,14 +54,16 @@ namespace opam_lab5
         public string Phone { get; set; }
     }
 
-   
+    // =========================================================
+    // ЧАСТИНА 2: СЕРВІСИ
+    // =========================================================
+
     public class UserService
     {
         private string filePath = "users.csv";
 
         public UserService()
         {
-            
             if (!File.Exists(filePath))
             {
                 File.WriteAllText(filePath, "Email,Password\nadmin,12345\n", Encoding.UTF8);
@@ -55,44 +89,35 @@ namespace opam_lab5
                 var parts = line.Split(',');
                 if (parts.Length > 0 && parts[0] == login) return false;
             }
-
             File.AppendAllText(filePath, $"{login},{password}\n", Encoding.UTF8);
             return true;
         }
 
-        
         public bool DeleteUser(string login, string password)
         {
             if (!File.Exists(filePath)) return false;
-
             var lines = File.ReadAllLines(filePath, Encoding.UTF8).ToList();
             var newLines = new List<string>();
-            bool foundAndDeleted = false;
+            bool found = false;
 
-            
-            if (lines.Count > 0) newLines.Add(lines[0]);
+            if (lines.Count > 0) newLines.Add(lines[0]); // Шапка
 
-          
             for (int i = 1; i < lines.Count; i++)
             {
                 var parts = lines[i].Split(',');
                 if (parts.Length >= 2 && parts[0] == login && parts[1] == password)
                 {
-                    foundAndDeleted = true;
-                    continue; 
+                    found = true;
+                    continue;
                 }
                 newLines.Add(lines[i]);
             }
 
-            if (foundAndDeleted)
-            {
-                File.WriteAllLines(filePath, newLines, Encoding.UTF8);
-            }
-            return foundAndDeleted;
+            if (found) File.WriteAllLines(filePath, newLines, Encoding.UTF8);
+            return found;
         }
     }
 
-    
     public class ProductService
     {
         private string filePath = "products.csv";
@@ -102,7 +127,7 @@ namespace opam_lab5
             if (!File.Exists(filePath))
             {
                 StringBuilder sb = new StringBuilder();
-                sb.AppendLine("Id,Name,Price,Quantity"); 
+                sb.AppendLine("Id,Name,Price,Quantity");
                 sb.AppendLine("1,Нурофен,120,50");
                 sb.AppendLine("2,Йод,40,100");
                 sb.AppendLine("3,Едем,150,30");
@@ -120,6 +145,7 @@ namespace opam_lab5
             {
                 var parts = line.Split(',');
                 if (parts.Length < 4) continue;
+                // TryParse захищає від помилок при читанні
                 if (int.TryParse(parts[0], out int id) &&
                     double.TryParse(parts[2], out double price) &&
                     int.TryParse(parts[3], out int qty))
@@ -132,8 +158,9 @@ namespace opam_lab5
 
         public void Add(string name, double price, int quantity)
         {
-            var products = GetAll();
-            int newId = (products.Count > 0) ? products.Max(p => p.Id) + 1 : 1;
+            // ТУТ ВИКОРИСТОВУЄМО НОВИЙ ГЕНЕРАТОР
+            int newId = IdGenerator.GetNewId(filePath);
+
             string line = $"{newId},{name},{price},{quantity}";
             File.AppendAllText(filePath, line + Environment.NewLine, Encoding.UTF8);
         }
@@ -152,7 +179,6 @@ namespace opam_lab5
         }
     }
 
-    
     public class ClientService
     {
         private string filePath = "clients.csv";
@@ -180,32 +206,29 @@ namespace opam_lab5
 
         public void Add(string name, string phone)
         {
-            var clients = GetAll();
-            int newId = (clients.Count > 0) ? clients.Max(c => c.Id) + 1 : 1;
+            // ТУТ ТАКОЖ ВИКОРИСТОВУЄМО ГЕНЕРАТОР
+            int newId = IdGenerator.GetNewId(filePath);
+
             File.AppendAllText(filePath, $"{newId},{name},{phone}\n", Encoding.UTF8);
         }
 
-       
         public void Delete(int id)
         {
             var clients = GetAll();
             var itemToRemove = clients.FirstOrDefault(c => c.Id == id);
-
             if (itemToRemove != null)
             {
                 clients.Remove(itemToRemove);
-                
-                var lines = new List<string> { "Id,Name,Phone" }; 
-                foreach (var c in clients)
-                {
-                    lines.Add($"{c.Id},{c.Name},{c.Phone}");
-                }
+                var lines = new List<string> { "Id,Name,Phone" };
+                foreach (var c in clients) lines.Add($"{c.Id},{c.Name},{c.Phone}");
                 File.WriteAllLines(filePath, lines, Encoding.UTF8);
             }
         }
     }
 
-    
+    // =========================================================
+    // ЧАСТИНА 3: ГОЛОВНА ПРОГРАМА (UI)
+    // =========================================================
     class Program
     {
         static ProductService _productService = new ProductService();
@@ -219,7 +242,6 @@ namespace opam_lab5
 
             bool isAuthenticated = false;
 
-            
             while (!isAuthenticated)
             {
                 Console.Clear();
@@ -231,65 +253,45 @@ namespace opam_lab5
 
                 int choice = (int)GetUserInput("Ваш вибір:");
 
-                if (choice == 1) 
+                if (choice == 1)
                 {
                     Console.Write("Логін: ");
                     string l = Console.ReadLine();
                     Console.Write("Пароль: ");
                     string p = Console.ReadLine();
 
-                    if (_userService.Login(l, p))
-                    {
-                        isAuthenticated = true;
-                    }
+                    if (_userService.Login(l, p)) isAuthenticated = true;
                     else
                     {
                         Console.WriteLine("Помилка: Невірний логін або пароль.");
                         Console.ReadKey();
                     }
                 }
-                else if (choice == 2) 
+                else if (choice == 2)
                 {
                     Console.Write("Новий логін: ");
                     string newLogin = Console.ReadLine();
                     Console.Write("Новий пароль: ");
                     string newPass = Console.ReadLine();
 
-                    if (_userService.Register(newLogin, newPass))
-                    {
-                        Console.WriteLine("Реєстрація успішна! Тепер увійдіть.");
-                    }
-                    else
-                    {
-                        Console.WriteLine("Такий користувач вже існує!");
-                    }
+                    if (_userService.Register(newLogin, newPass)) Console.WriteLine("Реєстрація успішна! Тепер увійдіть.");
+                    else Console.WriteLine("Такий користувач вже існує!");
                     Console.ReadKey();
                 }
-                else if (choice == 3) 
+                else if (choice == 3)
                 {
-                    Console.WriteLine("--- ВИДАЛЕННЯ АКАУНТА ---");
-                    Console.Write("Введіть логін для видалення: ");
+                    Console.Write("Логін для видалення: ");
                     string delLogin = Console.ReadLine();
-                    Console.Write("Введіть пароль для підтвердження: ");
+                    Console.Write("Пароль: ");
                     string delPass = Console.ReadLine();
 
-                    if (_userService.DeleteUser(delLogin, delPass))
-                    {
-                        Console.WriteLine("Акаунт успішно видалено.");
-                    }
-                    else
-                    {
-                        Console.WriteLine("Помилка: Невірні дані або користувача не знайдено.");
-                    }
+                    if (_userService.DeleteUser(delLogin, delPass)) Console.WriteLine("Акаунт видалено.");
+                    else Console.WriteLine("Помилка видалення.");
                     Console.ReadKey();
                 }
-                else if (choice == 4) 
-                {
-                    Environment.Exit(0);
-                }
+                else if (choice == 4) Environment.Exit(0);
             }
 
-            
             RenderIntro();
             ShowMainMenu();
         }
@@ -380,11 +382,9 @@ namespace opam_lab5
             Console.WriteLine(new string('-', 56));
 
             var products = _productService.GetAll();
-
             foreach (var p in products)
             {
-                Console.WriteLine("| {0,-5} | {1,-20} | {2,10:F2} | {3,10} |",
-                    p.Id, p.Name, p.Price, p.Quantity);
+                Console.WriteLine("| {0,-5} | {1,-20} | {2,10:F2} | {3,10} |", p.Id, p.Name, p.Price, p.Quantity);
             }
             Console.WriteLine(new string('-', 56));
             Console.ReadKey();
@@ -398,7 +398,6 @@ namespace opam_lab5
             int quantity = (int)GetUserInput("Кількість:");
 
             _productService.Add(name, price, quantity);
-
             Console.WriteLine("Товар збережено у файл!");
             Console.ReadKey();
         }
@@ -412,7 +411,6 @@ namespace opam_lab5
 
             int idToDelete = (int)GetUserInput("Введіть ID товару для видалення:");
             _productService.Delete(idToDelete);
-
             Console.WriteLine("Операцію завершено.");
             Console.ReadKey();
         }
@@ -449,11 +447,7 @@ namespace opam_lab5
             int choice = (int)GetUserInput("Виберіть метод:");
             var products = _productService.GetAll();
 
-            if (choice == 1)
-            {
-                products.Sort((a, b) => a.Price.CompareTo(b.Price));
-                Console.WriteLine("Відсортовано за зростанням ціни (Standard).");
-            }
+            if (choice == 1) products.Sort((a, b) => a.Price.CompareTo(b.Price));
             else if (choice == 2)
             {
                 for (int i = 0; i < products.Count - 1; i++)
@@ -468,16 +462,10 @@ namespace opam_lab5
                         }
                     }
                 }
-                Console.WriteLine("Відсортовано за зростанням ціни (Bubble).");
             }
 
             Console.WriteLine("\n=== СПИСОК ТОВАРІВ (Відсортовано) ===");
-            Console.WriteLine("| {0,-5} | {1,-20} | {2,10} | {3,10} |", "ID", "Назва", "Ціна", "К-сть");
-            Console.WriteLine(new string('-', 56));
-            foreach (var p in products)
-            {
-                Console.WriteLine("| {0,-5} | {1,-20} | {2,10:F2} | {3,10} |", p.Id, p.Name, p.Price, p.Quantity);
-            }
+            foreach (var p in products) Console.WriteLine("| {0,-5} | {1,-20} | {2,10:F2} | {3,10} |", p.Id, p.Name, p.Price, p.Quantity);
             Console.ReadKey();
         }
 
@@ -485,20 +473,11 @@ namespace opam_lab5
         {
             Console.Clear();
             Console.WriteLine("=== СТАТИСТИКА ===");
-
             var products = _productService.GetAll();
-            if (products.Count == 0)
-            {
-                Console.WriteLine("Немає товарів");
-                Console.ReadKey();
-                return;
-            }
+            if (products.Count == 0) { Console.WriteLine("Немає товарів"); Console.ReadKey(); return; }
 
-            double totalValue = 0;
-            double maxPrice = 0;
-            double minPrice = double.MaxValue;
-            int totalQuantity = 0;
-            int expensiveCount = 0;
+            double totalValue = 0, maxPrice = 0, minPrice = double.MaxValue;
+            int totalQuantity = 0, expensiveCount = 0;
 
             foreach (var p in products)
             {
@@ -509,12 +488,11 @@ namespace opam_lab5
                 if (p.Price > 100) expensiveCount++;
             }
 
-            Console.WriteLine($"Загальна вартість складу: {totalValue:F2} грн");
-            Console.WriteLine($"Середня ціна товару:      {(totalQuantity > 0 ? totalValue / totalQuantity : 0):F2} грн");
-            Console.WriteLine($"Максимальна ціна:         {maxPrice} грн");
-            Console.WriteLine($"Мінімальна ціна:          {minPrice} грн");
-            Console.WriteLine($"Товарів дорожче 100 грн:  {expensiveCount} шт");
-            Console.WriteLine($"Всього найменувань:       {products.Count}");
+            Console.WriteLine($"Загальна вартість: {totalValue:F2} грн");
+            Console.WriteLine($"Середня ціна:      {(totalQuantity > 0 ? totalValue / totalQuantity : 0):F2} грн");
+            Console.WriteLine($"Макс. ціна:        {maxPrice} грн");
+            Console.WriteLine($"Мін. ціна:         {minPrice} грн");
+            Console.WriteLine($"Товарів > 100 грн: {expensiveCount}");
             Console.ReadKey();
         }
 
@@ -524,9 +502,9 @@ namespace opam_lab5
             {
                 Console.Clear();
                 Console.WriteLine("=== КЛІЄНТИ ===");
-                Console.WriteLine("1. Перегляд клієнтів");
-                Console.WriteLine("2. Додати клієнта");
-                Console.WriteLine("3. Видалити клієнта"); 
+                Console.WriteLine("1. Перегляд");
+                Console.WriteLine("2. Додати");
+                Console.WriteLine("3. Видалити");
                 Console.WriteLine("4. Назад");
 
                 int choice = (int)GetUserInput("Виберіть дію:");
@@ -534,7 +512,7 @@ namespace opam_lab5
                 {
                     case 1: DisplayClients(); break;
                     case 2: AddClient(); break;
-                    case 3: DeleteClient(); break; 
+                    case 3: DeleteClient(); break;
                     case 4: return;
                     default: Console.WriteLine("Невірний вибір!"); Console.ReadKey(); break;
                 }
@@ -545,10 +523,7 @@ namespace opam_lab5
         {
             Console.WriteLine("\nСписок клієнтів:");
             var clients = _clientService.GetAll();
-            foreach (var c in clients)
-            {
-                Console.WriteLine($"{c.Id}. {c.Name} - {c.Phone}");
-            }
+            foreach (var c in clients) Console.WriteLine($"{c.Id}. {c.Name} - {c.Phone}");
             Console.ReadKey();
         }
 
@@ -560,7 +535,7 @@ namespace opam_lab5
             string phone = Console.ReadLine();
 
             _clientService.Add(name, phone);
-            Console.WriteLine("Клієнта додано у файл!");
+            Console.WriteLine("Клієнта додано!");
             Console.ReadKey();
         }
 
@@ -569,11 +544,9 @@ namespace opam_lab5
             Console.Clear();
             Console.WriteLine("--- Видалення клієнта ---");
             DisplayClients();
-            int id = (int)GetUserInput("Введіть ID клієнта для видалення:");
-
+            int id = (int)GetUserInput("Введіть ID:");
             _clientService.Delete(id);
-
-            Console.WriteLine("Операцію завершено.");
+            Console.WriteLine("Виконано.");
             Console.ReadKey();
         }
 
@@ -582,25 +555,18 @@ namespace opam_lab5
             Console.Clear();
             Console.WriteLine("=== ЗАМОВЛЕННЯ ===");
             Console.WriteLine("Доступні товари:");
-            var products = _productService.GetAll();
-            foreach (var p in products) Console.WriteLine($"{p.Name} - {p.Price} грн");
+            foreach (var p in _productService.GetAll()) Console.WriteLine($"{p.Name} - {p.Price} грн");
 
-            Console.WriteLine("\n*Розрахунок для 3-х фіксованих товарів (демо)*");
-            double priceNurofen = 120;
-            double priceIodine = 40;
-            double priceEdem = 150;
-
+            Console.WriteLine("\n*Розрахунок (демо)*");
+            double priceNurofen = 120, priceIodine = 40, priceEdem = 150;
             double Nurofen = GetUserInput("Кількість Нурофену:");
             double Iodine = GetUserInput("Кількість Йоду:");
             double Edem = GetUserInput("Кількість Едему:");
 
             double totalPrice = Nurofen * priceNurofen + Iodine * priceIodine + Edem * priceEdem;
             double discount = totalPrice > 1000 ? 15 : 5;
-            double discountTotal = totalPrice * discount / 100;
 
-            Console.WriteLine($"\nЗагальна вартість: {totalPrice} грн");
-            Console.WriteLine($"Знижка: {discount}%");
-            Console.WriteLine($"До сплати: {totalPrice - discountTotal} грн");
+            Console.WriteLine($"\nДо сплати: {totalPrice - (totalPrice * discount / 100)} грн (Знижка {discount}%)");
             Console.ReadKey();
         }
     }
