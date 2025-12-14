@@ -6,27 +6,26 @@ using System.Text;
 
 namespace opam_lab5
 {
-    // =========================================================
-    // НОВИЙ КЛАС: ГЕНЕРАТОР ID (Стійкий до помилок)
-    // =========================================================
+   
     public static class IdGenerator
+
+
     {
         public static int GetNewId(string filePath)
         {
-            // Якщо файлу немає, починаємо з 1
+            
             if (!File.Exists(filePath)) return 1;
 
             int maxId = 0;
-            // Читаємо всі рядки
+           
             var lines = File.ReadAllLines(filePath);
 
-            // Пропускаємо шапку (Skip(1))
+            
             foreach (var line in lines.Skip(1))
             {
                 var parts = line.Split(',');
 
-                // Перевіряємо, чи є дані і чи є перше поле числом
-                // Якщо рядок пошкоджений (наприклад "sdfsdf,name..."), TryParse поверне false і ми просто підемо далі
+                
                 if (parts.Length > 0 && int.TryParse(parts[0], out int currentId))
                 {
                     if (currentId > maxId) maxId = currentId;
@@ -36,9 +35,7 @@ namespace opam_lab5
         }
     }
 
-    // =========================================================
-    // ЧАСТИНА 1: МОДЕЛІ ДАНИХ
-    // =========================================================
+  
     public class Product
     {
         public int Id { get; set; }
@@ -54,9 +51,7 @@ namespace opam_lab5
         public string Phone { get; set; }
     }
 
-    // =========================================================
-    // ЧАСТИНА 2: СЕРВІСИ
-    // =========================================================
+ 
 
     public class UserService
     {
@@ -100,7 +95,7 @@ namespace opam_lab5
             var newLines = new List<string>();
             bool found = false;
 
-            if (lines.Count > 0) newLines.Add(lines[0]); // Шапка
+            if (lines.Count > 0) newLines.Add(lines[0]); 
 
             for (int i = 1; i < lines.Count; i++)
             {
@@ -145,7 +140,7 @@ namespace opam_lab5
             {
                 var parts = line.Split(',');
                 if (parts.Length < 4) continue;
-                // TryParse захищає від помилок при читанні
+               
                 if (int.TryParse(parts[0], out int id) &&
                     double.TryParse(parts[2], out double price) &&
                     int.TryParse(parts[3], out int qty))
@@ -158,7 +153,7 @@ namespace opam_lab5
 
         public void Add(string name, double price, int quantity)
         {
-            // ТУТ ВИКОРИСТОВУЄМО НОВИЙ ГЕНЕРАТОР
+           
             int newId = IdGenerator.GetNewId(filePath);
 
             string line = $"{newId},{name},{price},{quantity}";
@@ -206,7 +201,7 @@ namespace opam_lab5
 
         public void Add(string name, string phone)
         {
-            // ТУТ ТАКОЖ ВИКОРИСТОВУЄМО ГЕНЕРАТОР
+          
             int newId = IdGenerator.GetNewId(filePath);
 
             File.AppendAllText(filePath, $"{newId},{name},{phone}\n", Encoding.UTF8);
@@ -226,9 +221,7 @@ namespace opam_lab5
         }
     }
 
-    // =========================================================
-    // ЧАСТИНА 3: ГОЛОВНА ПРОГРАМА (UI)
-    // =========================================================
+    
     class Program
     {
         static ProductService _productService = new ProductService();
