@@ -6,26 +6,19 @@ using System.Text;
 
 namespace opam_lab5
 {
-   
     public static class IdGenerator
-
-
     {
         public static int GetNewId(string filePath)
         {
-            
             if (!File.Exists(filePath)) return 1;
 
             int maxId = 0;
-           
             var lines = File.ReadAllLines(filePath);
 
-            
             foreach (var line in lines.Skip(1))
             {
                 var parts = line.Split(',');
 
-                
                 if (parts.Length > 0 && int.TryParse(parts[0], out int currentId))
                 {
                     if (currentId > maxId) maxId = currentId;
@@ -35,7 +28,6 @@ namespace opam_lab5
         }
     }
 
-  
     public class Product
     {
         public int Id { get; set; }
@@ -50,8 +42,6 @@ namespace opam_lab5
         public string Name { get; set; }
         public string Phone { get; set; }
     }
-
- 
 
     public class UserService
     {
@@ -95,7 +85,7 @@ namespace opam_lab5
             var newLines = new List<string>();
             bool found = false;
 
-            if (lines.Count > 0) newLines.Add(lines[0]); 
+            if (lines.Count > 0) newLines.Add(lines[0]);
 
             for (int i = 1; i < lines.Count; i++)
             {
@@ -140,7 +130,7 @@ namespace opam_lab5
             {
                 var parts = line.Split(',');
                 if (parts.Length < 4) continue;
-               
+
                 if (int.TryParse(parts[0], out int id) &&
                     double.TryParse(parts[2], out double price) &&
                     int.TryParse(parts[3], out int qty))
@@ -153,9 +143,7 @@ namespace opam_lab5
 
         public void Add(string name, double price, int quantity)
         {
-           
             int newId = IdGenerator.GetNewId(filePath);
-
             string line = $"{newId},{name},{price},{quantity}";
             File.AppendAllText(filePath, line + Environment.NewLine, Encoding.UTF8);
         }
@@ -201,9 +189,7 @@ namespace opam_lab5
 
         public void Add(string name, string phone)
         {
-          
             int newId = IdGenerator.GetNewId(filePath);
-
             File.AppendAllText(filePath, $"{newId},{name},{phone}\n", Encoding.UTF8);
         }
 
@@ -221,7 +207,6 @@ namespace opam_lab5
         }
     }
 
-    
     class Program
     {
         static ProductService _productService = new ProductService();
@@ -408,28 +393,6 @@ namespace opam_lab5
             Console.ReadKey();
         }
 
-        private static void SearchProductByNameStart()
-        {
-            Console.Clear();
-            Console.WriteLine("=== ПОШУК ===");
-            Console.Write("Введіть перші літери назви: ");
-            string search = Console.ReadLine().ToLower();
-
-            var products = _productService.GetAll();
-            bool found = false;
-            Console.WriteLine("\nРезультати пошуку:");
-            foreach (var p in products)
-            {
-                if (p.Name.ToLower().StartsWith(search))
-                {
-                    Console.WriteLine($"ID: {p.Id} | {p.Name} - {p.Price} грн");
-                    found = true;
-                }
-            }
-            if (!found) Console.WriteLine("Не знайдено");
-            Console.ReadKey();
-        }
-
         private static void ShowSortMenu()
         {
             Console.Clear();
@@ -459,33 +422,6 @@ namespace opam_lab5
 
             Console.WriteLine("\n=== СПИСОК ТОВАРІВ (Відсортовано) ===");
             foreach (var p in products) Console.WriteLine("| {0,-5} | {1,-20} | {2,10:F2} | {3,10} |", p.Id, p.Name, p.Price, p.Quantity);
-            Console.ReadKey();
-        }
-
-        private static void ShowStatistics()
-        {
-            Console.Clear();
-            Console.WriteLine("=== СТАТИСТИКА ===");
-            var products = _productService.GetAll();
-            if (products.Count == 0) { Console.WriteLine("Немає товарів"); Console.ReadKey(); return; }
-
-            double totalValue = 0, maxPrice = 0, minPrice = double.MaxValue;
-            int totalQuantity = 0, expensiveCount = 0;
-
-            foreach (var p in products)
-            {
-                totalValue += p.Price * p.Quantity;
-                totalQuantity += p.Quantity;
-                if (p.Price > maxPrice) maxPrice = p.Price;
-                if (p.Price < minPrice) minPrice = p.Price;
-                if (p.Price > 100) expensiveCount++;
-            }
-
-            Console.WriteLine($"Загальна вартість: {totalValue:F2} грн");
-            Console.WriteLine($"Середня ціна:      {(totalQuantity > 0 ? totalValue / totalQuantity : 0):F2} грн");
-            Console.WriteLine($"Макс. ціна:        {maxPrice} грн");
-            Console.WriteLine($"Мін. ціна:         {minPrice} грн");
-            Console.WriteLine($"Товарів > 100 грн: {expensiveCount}");
             Console.ReadKey();
         }
 
@@ -560,6 +496,55 @@ namespace opam_lab5
             double discount = totalPrice > 1000 ? 15 : 5;
 
             Console.WriteLine($"\nДо сплати: {totalPrice - (totalPrice * discount / 100)} грн (Знижка {discount}%)");
+            Console.ReadKey();
+        }
+
+        private static void SearchProductByNameStart()
+        {
+            Console.Clear();
+            Console.WriteLine("=== ПОШУК ===");
+            Console.Write("Введіть перші літери назви: ");
+            string search = Console.ReadLine().ToLower();
+
+            var products = _productService.GetAll();
+            bool found = false;
+            Console.WriteLine("\nРезультати пошуку:");
+            foreach (var p in products)
+            {
+                if (p.Name.ToLower().StartsWith(search))
+                {
+                    Console.WriteLine($"ID: {p.Id} | {p.Name} - {p.Price} грн");
+                    found = true;
+                }
+            }
+            if (!found) Console.WriteLine("Не знайдено");
+            Console.ReadKey();
+        }
+
+        private static void ShowStatistics()
+        {
+            Console.Clear();
+            Console.WriteLine("=== СТАТИСТИКА ===");
+            var products = _productService.GetAll();
+            if (products.Count == 0) { Console.WriteLine("Немає товарів"); Console.ReadKey(); return; }
+
+            double totalValue = 0, maxPrice = 0, minPrice = double.MaxValue;
+            int totalQuantity = 0, expensiveCount = 0;
+
+            foreach (var p in products)
+            {
+                totalValue += p.Price * p.Quantity;
+                totalQuantity += p.Quantity;
+                if (p.Price > maxPrice) maxPrice = p.Price;
+                if (p.Price < minPrice) minPrice = p.Price;
+                if (p.Price > 100) expensiveCount++;
+            }
+
+            Console.WriteLine($"Загальна вартість: {totalValue:F2} грн");
+            Console.WriteLine($"Середня ціна:       {(totalQuantity > 0 ? totalValue / totalQuantity : 0):F2} грн");
+            Console.WriteLine($"Макс. ціна:         {maxPrice} грн");
+            Console.WriteLine($"Мін. ціна:          {minPrice} грн");
+            Console.WriteLine($"Товарів > 100 грн: {expensiveCount}");
             Console.ReadKey();
         }
     }
