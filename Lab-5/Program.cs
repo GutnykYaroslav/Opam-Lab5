@@ -267,7 +267,7 @@ namespace opam_lab5
                     else Console.WriteLine("Помилка видалення.");
                     Console.ReadKey();
                 }
-                else if (choice == 4) Environment.Exit(0);
+                else if (choice == 4) ExitProgram();
             }
 
             RenderIntro();
@@ -318,7 +318,7 @@ namespace opam_lab5
                     case 3: ShowOrderMenu(); break;
                     case 4: SearchProductByNameStart(); break;
                     case 5: ShowStatistics(); break;
-                    case 6: Environment.Exit(0); break;
+                    case 6: ExitProgram(); break;
                     default: Console.WriteLine("Неправильний вибір."); Console.ReadKey(); break;
                 }
             }
@@ -546,6 +546,11 @@ namespace opam_lab5
             Console.WriteLine($"Мін. ціна:          {minPrice} грн");
             Console.WriteLine($"Товарів > 100 грн: {expensiveCount}");
             Console.ReadKey();
+        }
+
+        private static void ExitProgram()
+        {
+            Environment.Exit(0);
         }
     }
 }
