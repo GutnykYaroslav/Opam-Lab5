@@ -31,7 +31,7 @@ namespace opam_lab5
     public class Product
     {
         public int Id { get; set; }
-        public string Name { get; set; }
+        public string Name { get; set; } = "";
         public double Price { get; set; }
         public int Quantity { get; set; }
     }
@@ -39,8 +39,8 @@ namespace opam_lab5
     public class Client
     {
         public int Id { get; set; }
-        public string Name { get; set; }
-        public string Phone { get; set; }
+        public string Name { get; set; } = "";
+        public string Phone { get; set; } = "";
     }
 
     public class UserService
@@ -57,6 +57,7 @@ namespace opam_lab5
 
         public bool Login(string login, string password)
         {
+            if (!File.Exists(filePath)) return false;
             var lines = File.ReadAllLines(filePath, Encoding.UTF8).Skip(1);
             foreach (var line in lines)
             {
@@ -68,11 +69,14 @@ namespace opam_lab5
 
         public bool Register(string login, string password)
         {
-            var lines = File.ReadAllLines(filePath, Encoding.UTF8);
-            foreach (var line in lines)
+            if (File.Exists(filePath))
             {
-                var parts = line.Split(',');
-                if (parts.Length > 0 && parts[0] == login) return false;
+                var lines = File.ReadAllLines(filePath, Encoding.UTF8);
+                foreach (var line in lines)
+                {
+                    var parts = line.Split(',');
+                    if (parts.Length > 0 && parts[0] == login) return false;
+                }
             }
             File.AppendAllText(filePath, $"{login},{password}\n", Encoding.UTF8);
             return true;
@@ -125,6 +129,8 @@ namespace opam_lab5
         public List<Product> GetAll()
         {
             var list = new List<Product>();
+            if (!File.Exists(filePath)) return list;
+
             var lines = File.ReadAllLines(filePath, Encoding.UTF8);
             foreach (var line in lines.Skip(1))
             {
@@ -175,6 +181,8 @@ namespace opam_lab5
         public List<Client> GetAll()
         {
             var list = new List<Client>();
+            if (!File.Exists(filePath)) return list;
+
             var lines = File.ReadAllLines(filePath, Encoding.UTF8);
             foreach (var line in lines.Skip(1))
             {
@@ -234,9 +242,9 @@ namespace opam_lab5
                 if (choice == 1)
                 {
                     Console.Write("Логін: ");
-                    string l = Console.ReadLine();
+                    string l = Console.ReadLine() ?? "";
                     Console.Write("Пароль: ");
-                    string p = Console.ReadLine();
+                    string p = Console.ReadLine() ?? "";
 
                     if (_userService.Login(l, p)) isAuthenticated = true;
                     else
@@ -248,9 +256,9 @@ namespace opam_lab5
                 else if (choice == 2)
                 {
                     Console.Write("Новий логін: ");
-                    string newLogin = Console.ReadLine();
+                    string newLogin = Console.ReadLine() ?? "";
                     Console.Write("Новий пароль: ");
-                    string newPass = Console.ReadLine();
+                    string newPass = Console.ReadLine() ?? "";
 
                     if (_userService.Register(newLogin, newPass)) Console.WriteLine("Реєстрація успішна! Тепер увійдіть.");
                     else Console.WriteLine("Такий користувач вже існує!");
@@ -259,9 +267,9 @@ namespace opam_lab5
                 else if (choice == 3)
                 {
                     Console.Write("Логін для видалення: ");
-                    string delLogin = Console.ReadLine();
+                    string delLogin = Console.ReadLine() ?? "";
                     Console.Write("Пароль: ");
-                    string delPass = Console.ReadLine();
+                    string delPass = Console.ReadLine() ?? "";
 
                     if (_userService.DeleteUser(delLogin, delPass)) Console.WriteLine("Акаунт видалено.");
                     else Console.WriteLine("Помилка видалення.");
@@ -371,7 +379,7 @@ namespace opam_lab5
         private static void AddProduct()
         {
             Console.Write("Назва: ");
-            string name = Console.ReadLine();
+            string name = Console.ReadLine() ?? "";
             double price = GetUserInput("Ціна:");
             int quantity = (int)GetUserInput("Кількість:");
 
@@ -459,9 +467,9 @@ namespace opam_lab5
         private static void AddClient()
         {
             Console.Write("Ім'я: ");
-            string name = Console.ReadLine();
+            string name = Console.ReadLine() ?? "";
             Console.Write("Телефон: ");
-            string phone = Console.ReadLine();
+            string phone = Console.ReadLine() ?? "";
 
             _clientService.Add(name, phone);
             Console.WriteLine("Клієнта додано!");
@@ -487,13 +495,22 @@ namespace opam_lab5
             foreach (var p in _productService.GetAll()) Console.WriteLine($"{p.Name} - {p.Price} грн");
 
             Console.WriteLine("\n*Розрахунок (демо)*");
-            double priceNurofen = 120, priceIodine = 40, priceEdem = 150;
+
+            double priceNurofen = 120, priceIodine = 40, priceEdem = 150, priceAspirin = 60, priceVitC = 200;
+
             double Nurofen = GetUserInput("Кількість Нурофену:");
             double Iodine = GetUserInput("Кількість Йоду:");
             double Edem = GetUserInput("Кількість Едему:");
+            double Aspirin = GetUserInput("Кількість Аспірину:");
+            double VitaminC = GetUserInput("Кількість Вітаміну С:");
 
-            double totalPrice = Nurofen * priceNurofen + Iodine * priceIodine + Edem * priceEdem;
-            double discount = totalPrice > 1000 ? 15 : 5;
+            double totalPrice = Nurofen * priceNurofen +
+                                Iodine * priceIodine +
+                                Edem * priceEdem +
+                                Aspirin * priceAspirin +
+                                VitaminC * priceVitC;
+
+            int discount = new Random().Next(10, 101);
 
             Console.WriteLine($"\nДо сплати: {totalPrice - (totalPrice * discount / 100)} грн (Знижка {discount}%)");
             Console.ReadKey();
@@ -504,7 +521,7 @@ namespace opam_lab5
             Console.Clear();
             Console.WriteLine("=== ПОШУК ===");
             Console.Write("Введіть перші літери назви: ");
-            string search = Console.ReadLine().ToLower();
+            string search = Console.ReadLine()?.ToLower() ?? "";
 
             var products = _productService.GetAll();
             bool found = false;
@@ -541,9 +558,9 @@ namespace opam_lab5
             }
 
             Console.WriteLine($"Загальна вартість: {totalValue:F2} грн");
-            Console.WriteLine($"Середня ціна:       {(totalQuantity > 0 ? totalValue / totalQuantity : 0):F2} грн");
-            Console.WriteLine($"Макс. ціна:         {maxPrice} грн");
-            Console.WriteLine($"Мін. ціна:          {minPrice} грн");
+            Console.WriteLine($"Середня ціна:        {(totalQuantity > 0 ? totalValue / totalQuantity : 0):F2} грн");
+            Console.WriteLine($"Макс. ціна:          {maxPrice} грн");
+            Console.WriteLine($"Мін. ціна:           {minPrice} грн");
             Console.WriteLine($"Товарів > 100 грн: {expensiveCount}");
             Console.ReadKey();
         }
