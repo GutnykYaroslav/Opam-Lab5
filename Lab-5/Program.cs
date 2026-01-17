@@ -323,7 +323,7 @@ namespace opam_lab5
                     Console.Write("Пароль: ");
                     string p = Console.ReadLine() ?? "";
 
-                    if (userService.Login(l, p)) isAuthenticated = true; // Ура, зайшли
+                    if (userService.Login(l, p)) isAuthenticated = true; // Ураааа, зайшли
                     else
                     {
                         Console.WriteLine("Помилка: Невірний логін або пароль.");
@@ -506,7 +506,7 @@ namespace opam_lab5
             // Варіант 1: Вбудоване сортування C#
             if (choice == 1) products.Sort((a, b) => a.Price.CompareTo(b.Price));
 
-            // Варіант 2: Алгоритм "Бульбашка" (як вчили на парах)
+            // Варіант 2: Алгоритм "Бульбашка" 
             else if (choice == 2)
             {
                 // Два цикли: один проходить по списку, інший штовхає елемент
@@ -554,7 +554,7 @@ namespace opam_lab5
             }
         }
 
-        // --- ОСЬ ТУТ Я ДОДАВ КОМЕНТАРІ ---
+        
         // Виведення списку клієнтів
         private static void DisplayClients()
         {
