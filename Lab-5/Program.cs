@@ -306,8 +306,8 @@ namespace opam_lab5
             // Поки не увійдемо - крутимо цей цикл
             while (!isAuthenticated)
             {
-                Console.Clear(); // Чистимо екран
-                Console.WriteLine("=== ВІТАЄМО В СИСТЕМІ ===");
+                Console.Clear();
+                Console.WriteLine("=== ВІТАЄМО В СИСТЕМІ (CSV Database) ===");
                 Console.WriteLine("1. Вхід");
                 Console.WriteLine("2. Реєстрація");
                 Console.WriteLine("3. Видалити акаунт");
