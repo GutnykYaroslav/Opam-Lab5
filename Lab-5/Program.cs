@@ -4,10 +4,10 @@ using System.IO;
 using System.Linq;
 using System.Text;
 
-// Це наша програма
+
 namespace opam_lab5
 {
-    // --- ДОПОМІЖНИЙ КЛАС ---
+    
     // Цей клас потрібен, щоб придумувати нові ID (номери) для товарів чи юзерів.
     // Щоб не було двох товарів з номером 1.
     public static class IdGenerator
@@ -42,7 +42,7 @@ namespace opam_lab5
     }
 
     // --- КЛАС ТОВАРУ ---
-    // Це просто шаблон, який описує, що таке "Товар"
+    // Це просто шаблон, який описує, що таке товар
     public class Product
     {
         public int Id { get; set; }            // Номер
@@ -57,16 +57,16 @@ namespace opam_lab5
     {
         public int Id { get; set; }
         public string Name { get; set; } = "";
-        public long Phone { get; set; } // Телефон (long, бо номер довгий)
+        public long Phone { get; set; } 
     }
 
     // --- СЕРВІС ЮЗЕРІВ ---
     // Тут вся логіка для входу, реєстрації і видалення адмінів/користувачів
     public class UserService
     {
-        private string filePath = "users.csv"; // Назва файлу, де лежать паролі
+        private string filePath = "users.csv"; // Назва файлу де лежать паролі
 
-        // Конструктор: запускається один раз, коли створюємо цей сервіс
+        // Конструктор: запускається один раз коли створюємо цей сервіс
         public UserService()
         {
             // Якщо файлу ще нема - створюємо його і записуємо туди адміна
@@ -80,7 +80,7 @@ namespace opam_lab5
         // Метод для логіну (перевірка пароля)
         public bool Login(string login, string password)
         {
-            // Якщо файлу нема, то і зайти не можна
+            // Якщо файлу нема то і зайти не можна
             if (!File.Exists(filePath)) return false;
 
             // Читаємо файл і зразу пропускаємо перший рядок (заголовок)
@@ -133,10 +133,10 @@ namespace opam_lab5
             for (int i = 1; i < lines.Count; i++)
             {
                 var parts = lines[i].Split(',');
-                // Якщо це ТОЙ САМИЙ юзер, якого треба видалити
+                // Якщо це ТОЙ САМИЙ юзер якого треба видалити
                 if (parts.Length >= 2 && parts[0] == login && parts[1] == password)
                 {
-                    found = true; // Знайшли!
+                    found = true; // Знайшли
                     continue; // Пропускаємо цей крок циклу (НЕ додаємо його в новий список)
                 }
                 // Всіх інших додаємо
@@ -150,7 +150,7 @@ namespace opam_lab5
     }
 
     // --- СЕРВІС ТОВАРІВ ---
-    // Тут ми додаємо, видаляємо і читаємо ліки
+    // Тут ми додаємо видаляємо і читаємо ліки
     public class ProductService
     {
         private string filePath = "products.csv"; // Файл з ліками
@@ -234,7 +234,7 @@ namespace opam_lab5
     }
 
     // --- СЕРВІС КЛІЄНТІВ ---
-    // Працює так само, як ProductService, але для людей
+    // Працює так само як ProductService але для людей
     public class ClientService
     {
         private string filePath = "clients.csv";
@@ -289,7 +289,7 @@ namespace opam_lab5
     // --- ГОЛОВНИЙ КЛАС ПРОГРАМИ ---
     class Program
     {
-        // Створюємо об'єкти наших сервісів, щоб ними користуватися
+        // Створюємо об'єкти наших сервісів щоб ними користуватися
         static ProductService productService = new ProductService();
         static ClientService clientService = new ClientService();
         static UserService userService = new UserService();
@@ -297,11 +297,11 @@ namespace opam_lab5
         // Точка входу (звідси стартує програма)
         public static void Main(string[] args)
         {
-            // Вмикаємо українську мову в консолі, щоб не було знаків питання замість букв
+            // Вмикаємо українську мову в консолі щоб не було знаків питання замість букв
             Console.OutputEncoding = Encoding.UTF8;
             Console.InputEncoding = Encoding.UTF8;
 
-            bool isAuthenticated = false; // Змінна, яка показує, чи ми увійшли
+            bool isAuthenticated = false; // Змінна, яка показує чи ми увійшли
 
             // Поки не увійдемо - крутимо цей цикл
             while (!isAuthenticated)
@@ -319,11 +319,11 @@ namespace opam_lab5
                 if (choice == 1) // Вхід
                 {
                     Console.Write("Логін: ");
-                    string l = Console.ReadLine() ?? ""; // ?? "" означає: якщо null, то взяти пустий рядок
+                    string l = Console.ReadLine() ?? ""; // ?? "" означає: поле для вводу інформації
                     Console.Write("Пароль: ");
                     string p = Console.ReadLine() ?? "";
 
-                    if (userService.Login(l, p)) isAuthenticated = true; // Ураааа, зайшли
+                    if (userService.Login(l, p)) isAuthenticated = true; // Ураааа зайшли
                     else
                     {
                         Console.WriteLine("Помилка: Невірний логін або пароль.");
@@ -372,7 +372,7 @@ namespace opam_lab5
         }
 
         // Дуже корисний метод!
-        // Він зчитує число і не дає програмі впасти, якщо користувач ввів літери
+        // Він зчитує число і не дає програмі впасти якщо користувач ввів літери
         public static double GetUserInput(string prompt = "Введіть число:")
         {
             Console.Write(prompt + " ");
@@ -390,7 +390,7 @@ namespace opam_lab5
         // Головне меню, де ми вибираємо, куди йти далі
         public static void ShowMainMenu()
         {
-            while (true) // Безкінечний цикл, щоб меню не закривалось
+            while (true) // Безкінечний цикл щоб меню не закривалось
             {
                 Console.Clear();
                 Console.WriteLine("\nГоловне меню:");
@@ -482,7 +482,7 @@ namespace opam_lab5
         {
             Console.Clear();
             Console.WriteLine("--- Видалення товару ---");
-            // Спочатку показуємо список, щоб знати ID
+            // Спочатку показуємо список щоб знати ID
             var products = productService.GetAll();
             foreach (var p in products) Console.WriteLine($"{p.Id}. {p.Name}");
 
@@ -509,7 +509,7 @@ namespace opam_lab5
             // Варіант 2: Алгоритм "Бульбашка" 
             else if (choice == 2)
             {
-                // Два цикли: один проходить по списку, інший штовхає елемент
+                // Два цикли: один проходить по списку інший штовхає елемент
                 for (int i = 0; i < products.Count - 1; i++)
                 {
                     for (int j = 0; j < products.Count - i - 1; j++)
@@ -559,7 +559,7 @@ namespace opam_lab5
         private static void DisplayClients()
         {
             Console.WriteLine("\nСписок клієнтів:");
-            // Звертаємось до сервісу, щоб отримати список з файлу
+            // Звертаємось до сервісу щоб отримати список з файлу
             var clients = clientService.GetAll();
 
             // Перебираємо всіх клієнтів і друкуємо їх
@@ -567,7 +567,7 @@ namespace opam_lab5
             {
                 Console.WriteLine($"{c.Id}. {c.Name} - {c.Phone}");
             }
-            Console.ReadKey(); // Чекаємо, поки натиснуть кнопку
+            Console.ReadKey(); // Чекаємо поки натиснуть кнопку
         }
 
         // Додавання нового клієнта
